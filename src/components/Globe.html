@@ -1,0 +1,65 @@
+
+<div id="globeViz"></div>
+ <script src="//unpkg.com/d3"></script>
+    <script src="//unpkg.com/globe.gl"></script>
+
+  <script>
+      // Define a color for ongoing disaster and a default color
+
+      // Define a pastel color for ongoing disaster and a default pastel color
+      const ongoingColor = '#C41E3D'; // SandyBrown (Orange)
+      const defaultColor = '#2e5077'; // LightSteelBlue
+
+      fetch(
+        'https://raw.githubusercontent.com/joe-chelladurai/home-page/main/disasters.geojson'
+      )
+        .then((res) => res.json())
+        .then((countries) => {
+          const world = Globe()
+          .width(540)
+            .height(540)
+            .globeImageUrl(
+              '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg'
+            )
+            .backgroundImageUrl(
+              '//raw.githubusercontent.com/joe-chelladurai/home-page/main/Untitled.jpeg'
+            )
+            .lineHoverPrecision(0)
+            .polygonsData(
+              countries.features.filter((d) => d.properties.ISO_A2 !== 'AQ')
+            )
+            .polygonAltitude(0.01)
+            .polygonCapColor((feat) =>
+              feat.properties.ongoing ? ongoingColor : defaultColor
+            )
+            .polygonSideColor(() => 'rgba(200, 200, 200, 0.8)') // Light pastel gray
+            .polygonStrokeColor(() => '#111')
+            .polygonLabel(
+              ({ properties: d }) => `
+              <div style="background: rgba(255, 255, 255, 0.8); border: 1px solid #ccc; border-radius: 5px; padding: 10px; color: #333;">
+                <b>${d.ADMIN} (${d.ISO_A2}):</b> <br />
+                <i>${d.name2}</i>
+              </div>
+            `
+            )
+            .onPolygonHover((hoverD) =>
+              world
+                .polygonAltitude((d) => (d === hoverD ? 0.01 : 0.01))
+                .polygonCapColor(
+                  (d) =>
+                    d === hoverD
+                      ? '#A8DADC'
+                      : d.properties.ongoing
+                      ? ongoingColor
+                      : defaultColor // Light pastel blue on hover
+                )
+            )
+            .polygonsTransitionDuration(300)(
+            document.getElementById('globeViz')
+          );
+
+          world.controls().autoRotate = true;
+          world.controls().autoRotateSpeed = 0.6;
+        });
+    </script>
+

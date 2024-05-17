@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subtle Smooth Toast Notifications</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@keyframes fadeInUp {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-75vh); /* Toast moves up 3/4ths of the viewport height */
+    opacity: 0;
+  }
+}
+
+.toast {
+  animation: fadeInUp 3s cubic-bezier(0.42, 0, 0.58, 1) forwards, slideUp 18s linear 3s forwards;
+}
+body {
+  font-family: 'Inter', sans-serif;
+}
+</style>
+</head>
+
+<div id="toast-container" class="fixed bottom-5 right-5 flex flex-col items-end space-y-2"></div>
+
+<script>
+let toastCount = 0;
+
+function addToast(country, event, monthyear) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast bg-white text-red-700 border-l-4 border-red-700 shadow rounded-lg p-4 opacity-0 w-80';
+
+  // Create and format content
+  const eventElement = document.createElement('div');
+  eventElement.className = 'font-bold';
+  eventElement.textContent = event;
+
+  const countryElement = document.createElement('div');
+  countryElement.className = 'mt-1';
+  countryElement.textContent = country;
+
+  const monthyearElement = document.createElement('div');
+  monthyearElement.className = 'text-right text-sm text-gray-500 mt-1';
+  monthyearElement.textContent = monthyear;
+
+  // Append elements to toast
+  toast.appendChild(eventElement);
+  toast.appendChild(countryElement);
+  toast.appendChild(monthyearElement);
+
+  // Add the new toast to the container
+  container.appendChild(toast);
+
+  // Remove toast after animation (total 21 seconds)
+  setTimeout(() => {
+    if (container.contains(toast)) {
+      container.removeChild(toast);
+    }
+  }, 21000);
+
+  toastCount++;
+}
+
+function addToastsSequentially(data) {
+  const ongoingEvents = data.features.filter(feature => feature.properties.ongoing === 1);
+
+  // Sort ongoing events by most recent date in card_monthyear
+  ongoingEvents.sort((a, b) => new Date(b.properties.card_monthyear) - new Date(a.properties.card_monthyear));
+
+  for (let i = 0; i < ongoingEvents.length; i++) {
+    setTimeout(() => {
+      const { card_country, card_event, card_monthyear } = ongoingEvents[i].properties;
+      addToast(card_country, card_event, card_monthyear);
+    }, i * 2000); // Adjust the delay for each toast (2 seconds)
+  }
+
+  // Repeat the loop indefinitely
+  setTimeout(() => {
+    toastCount = 0; // Reset toast count
+    addToastsSequentially(data);
+  }, ongoingEvents.length * 2000 + 2000); // ongoingEvents.length * 2 seconds each + a little buffer time
+}
+
+// Fetch data from the online source
+fetch('https://raw.githubusercontent.com/joe-chelladurai/home-page/main/disasters.geojson')
+  .then(response => response.json())
+  .then(data => {
+    addToastsSequentially(data);
+  })
+  .catch(error => console.error('Error fetching data:', error));
+</script>
+</body>
+</html>
