@@ -100,7 +100,7 @@ function addToastsSequentially(data) {
 }
 
 // Fetch data from the online source
-fetch('https://raw.githubusercontent.com/joe-chelladurai/home-page/main/disasters.geojson')
+fetch('https://raw.githubusercontent.com/joe-chelladurai/dashboard-disaster/main/disasters.geojson')
   .then(response => response.json())
   .then(data => {
     addToastsSequentially(data);
